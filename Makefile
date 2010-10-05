@@ -1,5 +1,5 @@
-CFLAGS 		= -W -Wall -pedantic -ansi
-SRCS  		= main.c
+CFLAGS 		= -W -Wall -pedantic -ansi -D_XOPEN_SOURCE --std=c99 -DDEBUG
+SRCS  		= main.c mode.c
 OBJS		= $(SRCS:.c=.o)
 
 all:		$(OBJS)

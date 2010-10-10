@@ -27,50 +27,48 @@ static unsigned char ip_second[] = {
 
 };
 
-#define	BIT_POS(bit)	((bit) % 8)
+#define	BIT_POS(bit)	(7 - ((bit) % 8))
 #define BYTE_POS(bit)	((bit) / 8)
 
-static __inline void des_ip_first(union block *block)
+static void des_ip_first(union block *current)
 {
 	union block prev;
 	unsigned char swap, shift;
 	int i;
 
-	memcpy(&prev, block, sizeof(prev));
+	memcpy(&prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
-
 		/*
 		 * swap the bit at position (ip_second[i] - 1) in prev with the bit at position i in block
 		 * swap is set to a byte with every bit at 0 except the bit at position i, which is set to bit at (ip_second[i] - 1)
 		 * then, the bit at position i in block is cleared, and its corresponding byte is AND with swap
 		 */
-		swap = prev.bytes[BYTE_POS(ip_first[i] - 1)] & (1 << (7 - BIT_POS(ip_first[i] - 1)));
-		swap >>= (7 - BIT_POS(ip_first[i] - 1));
-		swap <<= (7 - BIT_POS(i));
-		block->bytes[BYTE_POS(i)] &= ~(1 << (7 - BIT_POS(i)));
-		block->bytes[BYTE_POS(i)] |= swap;
+		swap = prev.bytes[BYTE_POS(ip_first[i] - 1)] & (1 << (BIT_POS(ip_first[i] - 1)));
+		swap >>= BIT_POS(ip_first[i] - 1);
+		swap <<= BIT_POS(i);
+		current->bytes[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
+		current->bytes[BYTE_POS(i)] |= swap;
 	}
 }
 
-static __inline void des_ip_second(union block *block)
+static void des_ip_second(union block *current)
 {
 	union block prev;
 	unsigned char swap, shift;
 	int i;
 
-	memcpy(&prev, block, sizeof(prev));
+	memcpy(&prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
-
 		/*
 		 * swap the bit at position (ip_second[i] - 1) in prev with the bit at position i in block
 		 * swap is set to a byte with every bit at 0 except the bit at position i, which is set to bit at (ip_second[i] - 1)
 		 * then, the bit at position i in block is cleared, and its corresponding byte is AND with swap
 		 */
-		swap = prev.bytes[BYTE_POS(ip_second[i] - 1)] & (1 << (7 - BIT_POS(ip_second[i] - 1)));
-		swap >>= (7 - BIT_POS(ip_second[i] - 1));
-		swap <<= (7 - BIT_POS(i));
-		block->bytes[BYTE_POS(i)] &= ~(1 << (7 - BIT_POS(i)));
-		block->bytes[BYTE_POS(i)] |= swap;
+		swap = prev.bytes[BYTE_POS(ip_second[i] - 1)] & (1 << BIT_POS(ip_second[i] - 1));
+		swap >>= BIT_POS(ip_second[i] - 1);
+		swap <<= BIT_POS(i);
+		current->bytes[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
+		current->bytes[BYTE_POS(i)] |= swap;
 	}
 	
 }
@@ -87,5 +85,4 @@ void des_cipher_block(union block *block)
 	printf("Block after ip_second:\n");
 	DUMP_BLOCK(block->bytes);
 	printf("\n\n");
-	exit(1);
 }

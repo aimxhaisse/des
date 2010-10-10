@@ -29,7 +29,8 @@ struct des {
 	int		ofd;	/* output file descriptor */
 };
 
-void des_mode(struct des * des);
+void des_mode(struct des *des);
+void des_cipher_block(union block *block);
 
 #define DUMP_BLOCK(bytes)						\
 	fprintf(stderr,							\

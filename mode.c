@@ -17,9 +17,7 @@ static void des_mode_ebc(struct des * des)
 			for (i = pad; i > 0; --i) {
 				input_block.bytes[8 - i] = pad;
 			}
-			DUMP_BLOCK(input_block.bytes);
 			des_cipher_block(&input_block);
-			/* Call encryption/decryption algorithm */
 			/* Write output block to output file */
 		}
 	} while (nb_read > 0);

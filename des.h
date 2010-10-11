@@ -30,7 +30,7 @@ struct des {
 };
 
 void des_mode(struct des *des);
-void des_cipher_block(union block *block);
+void des_cipher_block(struct des *des, union block *block);
 void binary_dump(unsigned char c);
 
 #define DUMP_BLOCK(bytes)				\

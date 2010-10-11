@@ -6,16 +6,15 @@
 
 static void des_mode_ebc(struct des * des)
 {
-	union block input_block;
-	union block output_block;
+	union block block;
 	int nb_read, bytes, pad, i;
 
 	do {
 		/* extract 8 bytes from the file (slightly complicated but deal with interruptions like signals) */
-		bytes = read(des->ifd, &input_block, sizeof(input_block));
+		bytes = read(des->ifd, &block, sizeof(block));
 		nb_read = bytes;
-		while (bytes > 0 && nb_read < sizeof(input_block)) {
-			bytes = read(des->ifd, &input_block.bytes[bytes], sizeof(input_block) - bytes);
+		while (bytes > 0 && nb_read < (int) sizeof(block)) {
+			bytes = read(des->ifd, &block.bytes[bytes], sizeof(block) - bytes);
 			if (bytes > 0)
 				nb_read += bytes;
 		}
@@ -23,9 +22,9 @@ static void des_mode_ebc(struct des * des)
 		if (nb_read > 0) {
 			pad = 8 - nb_read;
 			for (i = pad; i > 0; --i) {
-				input_block.bytes[8 - i] = pad;
+			block.bytes[8 - i] = pad;
 			}
-			des_cipher_block(&input_block);
+			des_cipher_block(des, &block);
 			/* Write output block to output file */
 		}
 	} while (bytes > 0);

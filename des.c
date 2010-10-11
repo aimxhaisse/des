@@ -33,7 +33,7 @@ static unsigned char ip_second[] = {
 static void des_ip_first(union block *current)
 {
 	union block prev;
-	unsigned char swap, shift;
+	unsigned char swap;
 	int i;
 
 	memcpy(&prev, current, sizeof(prev));
@@ -54,7 +54,7 @@ static void des_ip_first(union block *current)
 static void des_ip_second(union block *current)
 {
 	union block prev;
-	unsigned char swap, shift;
+	unsigned char swap;
 	int i;
 
 	memcpy(&prev, current, sizeof(prev));
@@ -73,7 +73,7 @@ static void des_ip_second(union block *current)
 	
 }
 
-void des_cipher_block(union block *block)
+void des_cipher_block(struct des *des, union block *block)
 {
 	printf("Initial BLOCK:\n");
 	DUMP_BLOCK(block->bytes);

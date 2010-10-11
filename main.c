@@ -29,7 +29,7 @@ static void des_init(void)
 	if ((des.ifd = open(des.ipath, O_RDONLY)) == -1)
 		err(1, "can't open input file %s", des.ipath);
 	if ((des.ofd = open(des.opath, O_WRONLY | O_TRUNC | O_CREAT, 0644)) == -1)
-		err(1, "can't open output file %s", des.ipath);
+		err(1, "can't open output file %s", des.opath);
 }
 
 int main(int argc, char *argv[])

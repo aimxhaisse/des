@@ -14,11 +14,6 @@ enum ciphermode {
 	EBC /* electronic codebook */
 };
 
-union block {
-	unsigned char	bytes[8];
-	unsigned int	half[2];
-};
-
 struct des {
 	enum operation	op;	/* current operation */
 	enum ciphermode	mode;	/* current mode */
@@ -30,7 +25,7 @@ struct des {
 };
 
 void des_mode(struct des *des);
-void des_cipher_block(struct des *des, union block *block);
+void des_cipher_block(struct des *des, unsigned char *block);
 void binary_dump(unsigned char c);
 
 #define DUMP_BLOCK(bytes)				\

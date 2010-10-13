@@ -6,7 +6,7 @@
 
 static void des_mode_ebc(struct des * des)
 {
-	union block block;
+	unsigned char block[8];
 	int nb_read, bytes, pad, i;
 
 	do {
@@ -14,7 +14,7 @@ static void des_mode_ebc(struct des * des)
 		bytes = read(des->ifd, &block, sizeof(block));
 		nb_read = bytes;
 		while (bytes > 0 && nb_read < (int) sizeof(block)) {
-			bytes = read(des->ifd, &block.bytes[bytes], sizeof(block) - bytes);
+			bytes = read(des->ifd, &block[bytes], sizeof(block) - bytes);
 			if (bytes > 0)
 				nb_read += bytes;
 		}
@@ -22,9 +22,9 @@ static void des_mode_ebc(struct des * des)
 		if (nb_read > 0) {
 			pad = 8 - nb_read;
 			for (i = pad; i > 0; --i) {
-			block.bytes[8 - i] = pad;
+				block[8 - i] = pad;
 			}
-			des_cipher_block(des, &block);
+			des_cipher_block(des, block);
 			/* Write output block to output file */
 		}
 	} while (bytes > 0);

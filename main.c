@@ -59,6 +59,8 @@ int main(int argc, char *argv[])
 		}
 
 	des_init();
+	des_key_permute(des.key);
+	des_generate_subkeys(des.key, des.subkeys);
 	des_mode(&des);
 
 	return 0;

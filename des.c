@@ -5,9 +5,6 @@
 
 #include "des.h"
 
-#define	BIT_POS(bit)	(7 - ((bit) % 8))
-#define BYTE_POS(bit)	((bit) / 8)
-
 static unsigned char ip_first[] = {
 	58, 50, 42, 34, 26, 18, 10, 2,
 	60, 52, 44, 36, 28, 20, 12, 4,
@@ -110,7 +107,7 @@ static unsigned char key_pc1[] = {
 /*
  * Key scheduling
  */
-static void des_key_permute(unsigned char *key)
+void des_key_permute(unsigned char *key)
 {
 	unsigned char tmp[8];
 	unsigned char swap;
@@ -158,28 +155,7 @@ static unsigned char subkeys_rotate[] = {
 	1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
 };
 
-/*
- * these macros are used to :
- * -> convert a char[8] to 2 integers
- * -> join two integers into a char[8]
- * this might seem useless but because of endianness, we can't
- * do this directly.
- */
-#define BLOCK_TO_INT(d, l, r)					\
-	l = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];	\
-	r = (d[4] << 24) | (d[5] << 16) | (d[6] << 8) | d[7];
-
-#define INT_TO_BLOCK(d, l, r)					\
-	d[0] = (l >> 24) & 0xff;				\
-	d[1] = (l >> 16) & 0xff;				\
-	d[2] = (l >> 8) & 0xff;					\
-	d[3] = l & 0xff;					\
-	d[4] = (r >> 24) & 0xff;				\
-	d[5] = (r >> 16) & 0xff;				\
-	d[6] = (r >> 8) & 0xff;					\
-	d[7] = right & 0xff;
-
-static void des_generate_subkeys(unsigned char *key, unsigned char *subkeys[])
+void des_generate_subkeys(unsigned char *key, unsigned char **subkeys)
 {
 	int i;
 	unsigned int l, r;
@@ -208,13 +184,10 @@ static void des_generate_subkeys(unsigned char *key, unsigned char *subkeys[])
 	}
 }
 
-void des_cipher_block(struct des *des, unsigned char *block)
+void des_cipher_block(unsigned char *block)
 {
 	unsigned char right[6];
-	unsigned char subkeys[16][7];
 
-	des_key_permute(des->key);
-	des_generate_subkeys(des->key, subkeys);
 	des_ip_first(block);
 	memcpy(right, &block[4], 4 * sizeof(unsigned char));
 	des_exp(block, right);

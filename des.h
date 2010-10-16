@@ -17,7 +17,7 @@ enum ciphermode {
 struct des {
 	enum operation	op;	/* current operation */
 	enum ciphermode	mode;	/* current mode */
-	char		key[8];	/* key to use */
+	unsigned char	key[8];	/* key to use */
 	char *		ipath;	/* path of input file */
 	char *		opath;	/* path of output file */
 	int		ifd;	/* input file descriptor */
@@ -26,7 +26,19 @@ struct des {
 
 void des_mode(struct des *des);
 void des_cipher_block(struct des *des, unsigned char *block);
-void binary_dump(unsigned char c);
+void binary_dumpc(unsigned char c);
+void binary_dumpi(unsigned int c);
+
+#define DUMP_KEY(key)				\
+	binary_dumpc(key[0]);			\
+	binary_dumpc(key[1]);			\
+	binary_dumpc(key[2]);			\
+	binary_dumpc(key[3]);			\
+	binary_dumpc(key[4]);			\
+	binary_dumpc(key[5]);			\
+	binary_dumpc(key[6]);			\
+	binary_dumpc(key[7]);			\
+	printf("\n");
 
 #define DUMP_BLOCK(bytes)				\
 	fprintf(stderr,					\
@@ -51,14 +63,14 @@ void binary_dump(unsigned char c);
 		bytes[5],				\
 		bytes[6],				\
 		bytes[7]);				\
-	binary_dump(bytes[0]);				\
-	binary_dump(bytes[1]);				\
-	binary_dump(bytes[2]);				\
-	binary_dump(bytes[3]);				\
-	binary_dump(bytes[4]);				\
-	binary_dump(bytes[5]);				\
-	binary_dump(bytes[6]);				\
-	binary_dump(bytes[7]);				\
+	binary_dumpc(bytes[0]);				\
+	binary_dumpc(bytes[1]);				\
+	binary_dumpc(bytes[2]);				\
+	binary_dumpc(bytes[3]);				\
+	binary_dumpc(bytes[4]);				\
+	binary_dumpc(bytes[5]);				\
+	binary_dumpc(bytes[6]);				\
+	binary_dumpc(bytes[7]);				\
 	printf("\n");
 
 #endif /* DES_H */

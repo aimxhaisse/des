@@ -51,16 +51,16 @@ int main(int argc, char *argv[])
 			des.opath = optarg;
 			break;
 		case 'k':
-			strncpy(des.key, optarg, MIN(strlen(optarg), 8));
+			memcpy(des.key, optarg, MIN(strlen(optarg), 8));
 			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
-	
+
 	des_init();
 	des_mode(&des);
-	
+
 	return 0;
 }
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include "des.h"
 
@@ -18,6 +19,9 @@ static unsigned char ip_first[] = {
 	63, 55, 47, 39, 31, 23, 15, 7
 };
 
+/*
+ * First permutation
+ */
 static void des_ip_first(unsigned char *current)
 {
 	unsigned char prev[8];
@@ -26,14 +30,6 @@ static void des_ip_first(unsigned char *current)
 
 	memcpy(&prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
-		/*
-		 * - swap the bit at position (ip_second[i] - 1) in prev with the bit
-		 * at position i in block
-		 * - swap is set to a byte with every bit at 0 except the bit at position
-		 * i, which is set to bit at (ip_second[i] - 1)
-		 * - then, the bit at position i in block is cleared, and its corresponding 
-		 * byte is AND with swap
-		 */
 		swap = prev[BYTE_POS(ip_first[i] - 1)] & (1 << (BIT_POS(ip_first[i] - 1)));
 		swap >>= BIT_POS(ip_first[i] - 1);
 		swap <<= BIT_POS(i);
@@ -53,6 +49,9 @@ static unsigned char ip_second[] = {
 	33, 1, 41, 9, 49, 17, 57, 25
 };
 
+/*
+ * Second permutation
+ */
 static void des_ip_second(unsigned char *current)
 {
 	unsigned char prev[8];
@@ -61,21 +60,12 @@ static void des_ip_second(unsigned char *current)
 
 	memcpy(&prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
-		/*
-		 * - swap the bit at position (ip_second[i] - 1) in prev with the bit at
-		 * position i in block
-		 * - swap is set to a byte with every bit at 0 except the bit at position 
-		 * i, which is set to bit at (ip_second[i] - 1)
-		 * - then, the bit at position i in block is cleared, and its corresponding 
-		 * byte is AND with swap
-		 */
 		swap = prev[BYTE_POS(ip_second[i] - 1)] & (1 << BIT_POS(ip_second[i] - 1));
 		swap >>= BIT_POS(ip_second[i] - 1);
 		swap <<= BIT_POS(i);
 		current[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
 		current[BYTE_POS(i)] |= swap;
 	}
-
 }
 
 static unsigned char exp_right[] = {
@@ -89,6 +79,9 @@ static unsigned char exp_right[] = {
 	28, 29, 30, 31, 32, 1
 };
 
+/*
+ * Block expansion
+ */
 static void des_exp(unsigned char block[4], unsigned char exp[6])
 {
 	unsigned char swap;
@@ -114,11 +107,14 @@ static unsigned char key_pc1[] = {
 	21, 13, 5, 28, 20, 12, 4
 };
 
-static void des_key_permute(char *key)
+/*
+ * Key scheduling
+ */
+static void des_key_permute(unsigned char *key)
 {
-	char tmp[8];
+	unsigned char tmp[8];
 	unsigned char swap;
-	int i;
+	unsigned int i;
 
 	memcpy(tmp, key, sizeof(tmp));
 	for (i = 0; i < 56; ++i) {
@@ -130,13 +126,98 @@ static void des_key_permute(char *key)
 	}
 }
 
+static unsigned char subkey_pc2[] = {
+	14, 17, 11, 24, 1, 5,
+	3, 28, 15, 6, 21, 10,
+	23, 19, 12, 4, 26, 8,
+	16, 7, 27, 20, 13, 2,
+	41, 52, 31, 37, 47, 55,
+	30, 40, 51, 45, 33, 48,
+	44, 49, 39, 56, 34, 53,
+	46, 42, 50, 36, 29, 32
+};
+
+/*
+ * Subkey permutation
+ */
+static void des_subkey_permute(unsigned char *key, unsigned char *result)
+{
+	unsigned char swap;
+	unsigned int i;
+
+	for (i = 0; i < 56; ++i) {
+		swap = key[BYTE_POS(subkey_pc2[i] - 1)] & (1 << BIT_POS(subkey_pc2[i] - 1));
+		swap >>= BIT_POS(subkey_pc2[i] - 1);
+		swap <<= BIT_POS(i);
+		result[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
+		result[BYTE_POS(i)] |= swap;
+	}
+}
+
+static unsigned char subkeys_rotate[] = {
+	1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
+};
+
+/*
+ * these macros are used to :
+ * -> convert a char[8] to 2 integers
+ * -> join two integers into a char[8]
+ * this might seem useless but because of endianness, we can't
+ * do this directly.
+ */
+#define BLOCK_TO_INT(d, l, r)					\
+	l = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];	\
+	r = (d[4] << 24) | (d[5] << 16) | (d[6] << 8) | d[7];
+
+#define INT_TO_BLOCK(d, l, r)					\
+	d[0] = (l >> 24) & 0xff;				\
+	d[1] = (l >> 16) & 0xff;				\
+	d[2] = (l >> 8) & 0xff;					\
+	d[3] = l & 0xff;					\
+	d[4] = (r >> 24) & 0xff;				\
+	d[5] = (r >> 16) & 0xff;				\
+	d[6] = (r >> 8) & 0xff;					\
+	d[7] = right & 0xff;
+
+static void des_generate_subkeys(unsigned char *key, unsigned char *subkeys[])
+{
+	int i;
+	unsigned int l, r;
+
+	for (i = 0; i < 16; ++i) {
+		DUMP_KEY(key);
+		BLOCK_TO_INT(key, l, r);
+
+		/* rotate subkeys according to the round */
+		l >>= subkeys_rotate[i];
+		r >>= subkeys_rotate[i];
+
+		/* ugly, but we need to merge the common byte */
+		key[0] = ((unsigned char *) &l)[0];
+		key[1] = ((unsigned char *) &l)[1];
+		key[2] = ((unsigned char *) &l)[2];
+		key[3] = (((unsigned char *) &l)[3] & 0xF0) | (((unsigned char *) &r)[0] & 0x0F);
+		key[4] = ((unsigned char *) &r)[1];
+		key[5] = ((unsigned char *) &r)[2];
+		key[6] = ((unsigned char *) &r)[3];
+
+		/* do the permutation and store it to the subkey */
+		des_subkey_permute(key, subkeys[i]);
+
+		break;
+	}
+}
+
 void des_cipher_block(struct des *des, unsigned char *block)
 {
 	unsigned char right[6];
+	unsigned char subkeys[16][7];
 
 	des_key_permute(des->key);
+	des_generate_subkeys(des->key, subkeys);
 	des_ip_first(block);
 	memcpy(right, &block[4], 4 * sizeof(unsigned char));
 	des_exp(block, right);
 	des_ip_second(block);
+	exit(1);
 }

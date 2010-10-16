@@ -188,14 +188,17 @@ static unsigned char sboxes[8][4][16] = {
 void des_cipher_block(struct des *des, unsigned char *block)
 {
 	int i, j;
-	unsigned char left[4], right[6], tmp[6], b[8], s[4];
+	unsigned char left[4], right[6], tmp[6], b[8], s[4], prev[6];
 	unsigned char row, col;
 
 	des_ip_first(block);
 	memcpy(right, &block[4], 4 * sizeof(unsigned char));
 	memcpy(left, &block, 4 * sizeof(unsigned char));
-	for (i = 0; i < 64; ++i) {
-		des_exp(block, right);
+
+	for (i = 0; i < 16; ++i) {
+
+		memcpy(prev, right, 4 * sizeof(unsigned char));
+		des_exp(prev, right);
 		memcpy(tmp, right, sizeof(tmp));
 
 		for (j = 0; j < 6; ++j)
@@ -230,7 +233,7 @@ void des_cipher_block(struct des *des, unsigned char *block)
 	}
 
 	memcpy(block, right, 4 * sizeof(unsigned char));
-	memcpy(&block[4], left, 4 * sizeof(unsigned char));
+	memcpy(block + 4, left, 4 * sizeof(unsigned char));
 
 	des_ip_second(block);
 }

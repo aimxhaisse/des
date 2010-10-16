@@ -189,7 +189,7 @@ void des_cipher_block(struct des *des, unsigned char *block)
 {
 	int i, j;
 	unsigned char left[4], right[6], tmp[6], b[8], s[4];
-	unsigned int row, col;
+	unsigned char row, col;
 
 	des_ip_first(block);
 	memcpy(right, &block[4], 4 * sizeof(unsigned char));

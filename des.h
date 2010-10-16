@@ -100,6 +100,8 @@ void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7]);
 	d[6] = (r >> 8) & 0xff;					\
 	d[7] = right & 0xff;
 
+
+
 #define	BIT_POS(bit)	(7 - ((bit) % 8))
 #define BYTE_POS(bit)	((bit) / 8)
 

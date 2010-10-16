@@ -75,23 +75,41 @@ static unsigned char subkeys_rotate[] = {
 void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7])
 {
 	int i;
-	unsigned int l, r;
+	unsigned char l[4], r[4];
 
 	for (i = 0; i < 16; ++i) {
-		BLOCKS_TO_INTS(key, l, r);
 
-		/* rotate subkeys according to the round */
-		l = (l >> subkeys_rotate[i]) | (l << (8 - subkeys_rotate[i]));
-		r = (r >> subkeys_rotate[i]) | (r << (8 - subkeys_rotate[i]));
+		if (subkeys_rotate[i] == 1) {
+			l[0] = (key[0] << 1) | ((key[1] & 0x80) >> 7);
+			l[1] = (key[1] << 1) | ((key[2] & 0x80) >> 7);
+			l[2] = (key[2] << 1) | ((key[3] & 0x80) >> 7);
+			l[3] = ((key[3] & 0xF0) << 1) | ((key[0] & 0x80) >> 3);
+
+			r[0] = (key[3] << 1) | ((key[4] & 0x80) >> 7);
+			r[1] = (key[4] << 1) | ((key[5] & 0x80) >> 7);
+			r[2] = (key[5] << 1) | ((key[6] & 0x80) >> 7);
+			r[3] = (key[6] << 1) | ((key[3] & 0x08) >> 3);
+
+		} else {
+			l[0] = (key[0] << 2) | ((key[1] & 0xC0) >> 6);
+			l[1] = (key[1] << 2) | ((key[2] & 0xC0) >> 6);
+			l[2] = (key[2] << 2) | ((key[3] & 0xC0) >> 6);
+			l[3] = ((key[3] & 0xF0) << 2) | ((key[0] & 0xC0) >> 2);
+
+			r[0] = (key[3] << 2) | ((key[4] & 0xC0) >> 6);
+			r[1] = (key[4] << 2) | ((key[5] & 0xC0) >> 6);
+			r[2] = (key[5] << 2) | ((key[6] & 0xC0) >> 6);
+			r[3] = (key[6] << 2) | ((key[3] & 0x0C) >> 2);
+		}
 
 		/* ugly, but we need to merge the common byte */
-		key[0] = ((unsigned char *) &l)[0];
-		key[1] = ((unsigned char *) &l)[1];
-		key[2] = ((unsigned char *) &l)[2];
-		key[3] = (((unsigned char *) &l)[3] & 0xF0) | (((unsigned char *) &r)[0] & 0x0F);
-		key[4] = ((unsigned char *) &r)[1];
-		key[5] = ((unsigned char *) &r)[2];
-		key[6] = ((unsigned char *) &r)[3];
+		key[0] = l[0];
+		key[1] = l[1];
+		key[2] = l[2];
+		key[3] = (l[3] & 0xF0) | (r[0] & 0x0F);
+		key[4] = r[1];
+		key[5] = r[2];
+		key[6] = r[3];
 
 		/* do the permutation and store it to the subkey */
 		des_subkey_permute(key, subkeys[i]);

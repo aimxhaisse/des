@@ -81,8 +81,8 @@ void des_generate_subkeys(unsigned char *key, unsigned char **subkeys)
 		BLOCK_TO_INT(key, l, r);
 
 		/* rotate subkeys according to the round */
-		l >>= subkeys_rotate[i];
-		r >>= subkeys_rotate[i];
+		l = (l >> subkeys_rotate[i]) | (l << (8 - subkeys_rotate[i]));
+		r = (r >> subkeys_rotate[i]) | (r << (8 - subkeys_rotate[i]));
 
 		/* ugly, but we need to merge the common byte */
 		key[0] = ((unsigned char *) &l)[0];

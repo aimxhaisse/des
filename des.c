@@ -51,7 +51,6 @@ static unsigned char ip_second[] = {
 	35, 3, 43, 11, 51, 19, 59, 27,
 	34, 2, 42, 10, 50, 18, 58, 26,
 	33, 1, 41, 9, 49, 17, 57, 25
-
 };
 
 static void des_ip_second(unsigned char *current)
@@ -76,7 +75,7 @@ static void des_ip_second(unsigned char *current)
 		current[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
 		current[BYTE_POS(i)] |= swap;
 	}
-	
+
 }
 
 static unsigned char exp_right[] = {
@@ -100,7 +99,34 @@ static void des_exp(unsigned char block[4], unsigned char exp[6])
 		swap >>= BIT_POS(exp_right[i] - 1);
 		swap <<= BIT_POS(i);
 		exp[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
-		exp[BYTE_POS(i)] |= swap;		
+		exp[BYTE_POS(i)] |= swap;
+	}
+}
+
+static unsigned char key_pc1[] = {
+	57, 49, 41, 33, 25, 17, 9,
+	1, 58, 50, 42, 34, 26, 18,
+	10, 2, 59, 51, 43, 35, 27,
+	19, 11, 3, 60, 52, 44, 36,
+	63, 55, 47, 39, 31, 23, 15,
+	7, 62, 54, 46, 38, 30, 22,
+	14, 6, 61, 53, 45, 37, 29,
+	21, 13, 5, 28, 20, 12, 4
+};
+
+static void des_key_permute(char *key)
+{
+	char tmp[8];
+	unsigned char swap;
+	int i;
+
+	memcpy(tmp, key, sizeof(tmp));
+	for (i = 0; i < 56; ++i) {
+		swap = tmp[BYTE_POS(key_pc1[i] - 1)] & (1 << BIT_POS(key_pc1[i] - 1));
+		swap >>= BIT_POS(key_pc1[i] - 1);
+		swap <<= BIT_POS(i);
+		key[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
+		key[BYTE_POS(i)] |= swap;
 	}
 }
 
@@ -108,10 +134,9 @@ void des_cipher_block(struct des *des, unsigned char *block)
 {
 	unsigned char right[6];
 
+	des_key_permute(des->key);
 	des_ip_first(block);
-
 	memcpy(right, &block[4], 4 * sizeof(unsigned char));
 	des_exp(block, right);
-
 	des_ip_second(block);
 }

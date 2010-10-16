@@ -12,3 +12,7 @@ fclean:		clean
 		rm -f des
 
 re:		fclean all
+
+
+check-syntax:
+	        gcc -W -Wall -pedantic -ansi -Wstrict-prototypes -fsyntax-only $(SRC) $(CFLAGS)

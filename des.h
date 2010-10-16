@@ -30,7 +30,7 @@ void des_cipher_block(struct des *des, unsigned char *block);
 void binary_dumpc(unsigned char c);
 void binary_dumpi(unsigned int c);
 void des_key_permute(unsigned char *key);
-void des_generate_subkeys(unsigned char *key, unsigned char **subkeys);
+void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7]);
 
 #define DUMP_KEY(key)				\
 	binary_dumpc(key[0]);			\
@@ -80,9 +80,12 @@ void des_generate_subkeys(unsigned char *key, unsigned char **subkeys);
 /*
  * convert an unsigned char[8] to 2 integers
  */
-#define BLOCK_TO_INT(d, l, r)					\
+#define BLOCKS_TO_INTS(d, l, r)					\
 	l = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];	\
 	r = (d[4] << 24) | (d[5] << 16) | (d[6] << 8) | d[7];
+
+#define BLOCK_TO_INT(d, i)					\
+	i = (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3];
 
 /*
  * convert two integers to an unsigned char[8]

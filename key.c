@@ -59,6 +59,7 @@ static void des_subkey_permute(unsigned char *key, unsigned char *result)
 		swap = key[BYTE_POS(subkey_pc2[i] - 1)] & (1 << BIT_POS(subkey_pc2[i] - 1));
 		swap >>= BIT_POS(subkey_pc2[i] - 1);
 		swap <<= BIT_POS(i);
+
 		result[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
 		result[BYTE_POS(i)] |= swap;
 	}
@@ -71,14 +72,13 @@ static unsigned char subkeys_rotate[] = {
 /*
  * subkey generation
  */
-void des_generate_subkeys(unsigned char *key, unsigned char **subkeys)
+void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7])
 {
 	int i;
 	unsigned int l, r;
 
 	for (i = 0; i < 16; ++i) {
-		DUMP_KEY(key);
-		BLOCK_TO_INT(key, l, r);
+		BLOCKS_TO_INTS(key, l, r);
 
 		/* rotate subkeys according to the round */
 		l = (l >> subkeys_rotate[i]) | (l << (8 - subkeys_rotate[i]));
@@ -95,7 +95,5 @@ void des_generate_subkeys(unsigned char *key, unsigned char **subkeys)
 
 		/* do the permutation and store it to the subkey */
 		des_subkey_permute(key, subkeys[i]);
-
-		break;
 	}
 }

@@ -1,4 +1,4 @@
-CFLAGS 		= -W -Wall -pedantic -ansi -D_XOPEN_SOURCE --std=c99 -DDEBUG
+CFLAGS 		= -W -Wall -pedantic -ansi -D_XOPEN_SOURCE --std=c99 -ggdb3
 SRCS  		= main.c mode.c des.c tools.c key.c
 OBJS		= $(SRCS:.c=.o)
 

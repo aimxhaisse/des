@@ -24,7 +24,7 @@ static void des_mode_ebc(struct des * des)
 			for (i = pad; i > 0; --i) {
 				block[8 - i] = pad;
 			}
-			des_cipher_block(block);
+			des_cipher_block(des, block);
 			/* Write output block to output file */
 		}
 	} while (bytes > 0);

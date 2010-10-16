@@ -80,7 +80,7 @@ static unsigned char exp_right[] = {
 /*
  * Block expansion
  */
-static void des_exp(unsigned char block[4], unsigned char exp[6])
+static void des_exp(unsigned char *block, unsigned char *exp)
 {
 	unsigned char swap;
 	int i;
@@ -92,6 +92,29 @@ static void des_exp(unsigned char block[4], unsigned char exp[6])
 		swap <<= BIT_POS(i);
 		exp[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
 		exp[BYTE_POS(i)] |= swap;
+	}
+}
+
+static unsigned char p[] = {
+	16, 7, 20, 21, 29, 12, 28, 17,
+	1, 15, 23, 26, 5, 18, 31, 10,
+	2, 8, 24, 14, 32, 27, 3, 9,
+	19, 13, 30, 6, 22, 11, 4, 25
+};
+
+static void des_p(unsigned char * s)
+{
+	unsigned char swap, tmp[8];
+	int i;
+
+	memcpy(tmp, s, sizeof(tmp));
+	for (i = 0; i < 32; ++i) {
+		/* swap the two bits using the matrice p */
+		swap = tmp[BYTE_POS(p[i] - 1)] & (1 << BIT_POS(p[i] - 1));
+		swap >>= BIT_POS(p[i] - 1);
+		swap <<= BIT_POS(i);
+		s[BYTE_POS(i)] &= ~(1 << BIT_POS(i));
+		s[BYTE_POS(i)] |= swap;
 	}
 }
 
@@ -165,7 +188,7 @@ static unsigned char sboxes[8][4][16] = {
 void des_cipher_block(struct des *des, unsigned char *block)
 {
 	int i, j;
-	unsigned char right[6], tmp[6], b[8], s[8];
+	unsigned char right[6], tmp[6], b[8], s[4];
 	unsigned int row, col;
 
 	des_ip_first(block);
@@ -187,12 +210,14 @@ void des_cipher_block(struct des *des, unsigned char *block)
 		b[6] = ((tmp[4] & 0x0F) << 2) | (tmp[5] & 0xC0);
 		b[7] = tmp[6] & 0x3F;
 
+		memset(s, 0, sizeof(s));
 		for (j = 0; j < 8; ++j) {
 			row = (b[j] & 0x01) | ((b[j] & 0x20) >> 4);
 			col = (b[j] & 0x1E) >> 1;
-			s[j] = sboxes[j][row][col];
+			s[4] |= sboxes[j][row][col] << (j % 2 ? 4 : 0);
 		}
-		
+
+		des_p(s);
 	}
 
 	des_ip_second(block);

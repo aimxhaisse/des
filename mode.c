@@ -25,17 +25,7 @@ static void des_mode_ebc(struct des * des)
 			for (i = pad; i > 0; --i) {
 				block[8 - i] = 0;
 			}
-			switch (des->mode) {
-			case ENCRYPT:
-				des_encipher_block(des, block);
-				break;
-			case DECRYPT:
-				des_decipher_block(des, block);
-				break;
-			default:
-				err(1, "des: unknown operation\n");
-				/* NOTREACHED */
-			}
+			des_cipher_block(des, block);
 			write(des->ofd, block, sizeof(block));
 		}
 	} while (bytes > 0);

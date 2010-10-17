@@ -26,8 +26,7 @@ struct des {
 };
 
 void des_mode(struct des *des);
-void des_encipher_block(struct des *des, unsigned char *block);
-void des_decipher_block(struct des *des, unsigned char *block);
+void des_cipher_block(struct des *des, unsigned char *block);
 void binary_dumpc(unsigned char c);
 void binary_dumpi(unsigned int c);
 void des_key_permute(unsigned char *key);

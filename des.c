@@ -224,11 +224,11 @@ static void des_sub_s(unsigned char *s, unsigned char *b, unsigned char *left)
 }
 
 /*
- * Main entry to encipher one block
+ * Main entry to cipher one block
  */
-void des_encipher_block(struct des *des, unsigned char *block)
+void des_cipher_block(struct des *des, unsigned char *block)
 {
-	int i, j;
+	int i, j, subkey_rank;
 	unsigned char left[4], right[6], tmp[6], b[8], s[4], oldr[4];
 
 	des_ip_first(block);
@@ -237,35 +237,10 @@ void des_encipher_block(struct des *des, unsigned char *block)
 	for (i = 0; i < 16; ++i) {
 		memcpy(oldr, right, sizeof(oldr));
 		des_exp(right);
+		/* the only difference between crypt/encrypt is the order of subkeys */
+		subkey_rank = des->op == ENCRYPT ? i : (15 - i);
 		for (j = 0; j < 6; ++j)
-			tmp[j] = right[j] ^ des->subkeys[i][j];
-		des_split_6b(tmp, b);
-		des_sub_s(s, b, left);
-		memcpy(left, oldr, sizeof(left));
-		memcpy(right, s, sizeof(s));
-	}
-	memcpy(block, right, 4 * sizeof(unsigned char));
-	memcpy(block + 4, left, sizeof(left));
-	des_ip_second(block);
-}
-
-
-/*
- * Main entry to decipher one block
- */
-void des_decipher_block(struct des *des, unsigned char *block)
-{
-	int i, j;
-	unsigned char left[4], right[6], tmp[6], b[8], s[4], oldr[4];
-
-	des_ip_first(block);
-	memcpy(left, block, sizeof(left));
-	memcpy(right, block + 4, 4 * sizeof(unsigned char));
-	for (i = 0; i < 16; ++i) {
-		memcpy(oldr, right, sizeof(oldr));
-		des_exp(right);
-		for (j = 0; j < 6; ++j)
-			tmp[j] = right[j] ^ des->subkeys[15 - i][j];
+			tmp[j] = right[j] ^ des->subkeys[subkey_rank][j];
 		des_split_6b(tmp, b);
 		des_sub_s(s, b, left);
 		memcpy(left, oldr, sizeof(left));

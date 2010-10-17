@@ -185,57 +185,93 @@ static unsigned char sboxes[8][4][16] = {
 };
 
 /*
- * Main entry
+ * each rank in b is made of 6 linear bits from tmp
  */
-void des_cipher_block(struct des *des, unsigned char *block)
+static void des_split_6b(unsigned char * tmp, unsigned char * b)
+{
+	b[0] = (tmp[0] & 0xFC) >> 2;
+	b[1] = ((tmp[0] & 0x03) << 4) | ((tmp[1] & 0xF0) >> 4);
+	b[2] = ((tmp[1] & 0x0F) << 2) | ((tmp[2] & 0xC0) >> 6);
+	b[3] = tmp[2] & 0x3F;
+	b[4] = (tmp[3] & 0xFC) >> 2;
+	b[5] = ((tmp[3] & 0x03) << 4) | ((tmp[4] & 0xF0) >> 4);
+	b[6] = ((tmp[4] & 0x0F) << 2) | ((tmp[5] & 0xC0) >> 6);
+	b[7] = tmp[5] & 0x3F;
+}
+
+/*
+ * construct S picking 8 times 4bits from sboxes, then permute and xor it with
+ * the left key.
+ */
+static void des_sub_s(unsigned char *s, unsigned char *b, unsigned char *left)
+{
+	int i;
+	unsigned char row, col;
+
+	memset(s, 0, sizeof(s));
+	for (i = 0; i < 8; ++i) {
+		row = (b[i] & 0x01) | ((b[i] & 0x20) >> 4);
+		col = (b[i] & 0x1E) >> 1;
+		s[i / 2] |= sboxes[i][row][col] << (!(i % 2) ? 4 : 0);
+	}
+
+	des_p(s);
+
+	s[0] ^= left[0];
+	s[1] ^= left[1];
+	s[2] ^= left[2];
+	s[3] ^= left[3];
+}
+
+/*
+ * Main entry to encipher one block
+ */
+void des_encipher_block(struct des *des, unsigned char *block)
 {
 	int i, j;
 	unsigned char left[4], right[6], tmp[6], b[8], s[4], oldr[4];
-	unsigned char row, col;
 
 	des_ip_first(block);
-
 	memcpy(left, block, sizeof(left));
 	memcpy(right, block + 4, 4 * sizeof(unsigned char));
-
 	for (i = 0; i < 16; ++i) {
-
 		memcpy(oldr, right, sizeof(oldr));
 		des_exp(right);
-
 		for (j = 0; j < 6; ++j)
 			tmp[j] = right[j] ^ des->subkeys[i][j];
-
-		/* each rank in b is made of 6 linear bits from tmp */
-		b[0] = (tmp[0] & 0xFC) >> 2;
-		b[1] = ((tmp[0] & 0x03) << 4) | ((tmp[1] & 0xF0) >> 4);
-		b[2] = ((tmp[1] & 0x0F) << 2) | ((tmp[2] & 0xC0) >> 6);
-		b[3] = tmp[2] & 0x3F;
-		b[4] = (tmp[3] & 0xFC) >> 2;
-		b[5] = ((tmp[3] & 0x03) << 4) | ((tmp[4] & 0xF0) >> 4);
-		b[6] = ((tmp[4] & 0x0F) << 2) | ((tmp[5] & 0xC0) >> 6);
-		b[7] = tmp[5] & 0x3F;
-
-		memset(s, 0, sizeof(s));
-		for (j = 0; j < 8; ++j) {
-			row = (b[j] & 0x01) | ((b[j] & 0x20) >> 4);
-			col = (b[j] & 0x1E) >> 1;
-			s[j / 2] |= sboxes[j][row][col] << (!(j % 2) ? 4 : 0);
-		}
-
-		des_p(s);
-
-		s[0] ^= left[0];
-		s[1] ^= left[1];
-		s[2] ^= left[2];
-		s[3] ^= left[3];
-
+		des_split_6b(tmp, b);
+		des_sub_s(s, b, left);
 		memcpy(left, oldr, sizeof(left));
 		memcpy(right, s, sizeof(s));
 	}
-
 	memcpy(block, right, 4 * sizeof(unsigned char));
 	memcpy(block + 4, left, sizeof(left));
+	des_ip_second(block);
+}
 
+
+/*
+ * Main entry to decipher one block
+ */
+void des_decipher_block(struct des *des, unsigned char *block)
+{
+	int i, j;
+	unsigned char left[4], right[6], tmp[6], b[8], s[4], oldr[4];
+
+	des_ip_first(block);
+	memcpy(left, block, sizeof(left));
+	memcpy(right, block + 4, 4 * sizeof(unsigned char));
+	for (i = 0; i < 16; ++i) {
+		memcpy(oldr, right, sizeof(oldr));
+		des_exp(right);
+		for (j = 0; j < 6; ++j)
+			tmp[j] = right[j] ^ des->subkeys[15 - i][j];
+		des_split_6b(tmp, b);
+		des_sub_s(s, b, left);
+		memcpy(left, oldr, sizeof(left));
+		memcpy(right, s, sizeof(s));
+	}
+	memcpy(block, right, 4 * sizeof(unsigned char));
+	memcpy(block + 4, left, sizeof(left));
 	des_ip_second(block);
 }

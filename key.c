@@ -79,6 +79,11 @@ void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[6])
 
 	for (i = 0; i < 16; ++i) {
 
+		/*
+		 * ugly, but we haven't found any better way to perform the
+		 * rotation on 28bits out of 32, partly because of endianness
+		 * issues when converting to integers, so let's do it by hand.
+		 */
 		if (subkeys_rotate[i] == 1) {
 			l[0] = (key[0] << 1) | ((key[1] & 0x80) >> 7);
 			l[1] = (key[1] << 1) | ((key[2] & 0x80) >> 7);
@@ -102,7 +107,7 @@ void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[6])
 			r[3] = (key[6] << 2) | ((key[3] & 0x0C) >> 2);
 		}
 
-		/* ugly, but we need to merge the common byte */
+		/* now we need to merge the common byte */
 		key[0] = l[0];
 		key[1] = l[1];
 		key[2] = l[2];

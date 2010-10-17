@@ -206,13 +206,13 @@ void des_cipher_block(struct des *des, unsigned char *block)
 
 		/* each rank in b is made of 6 linear bits from tmp */
 		b[0] = (tmp[0] & 0xFC) >> 2;
-		b[1] = ((tmp[0] & 0x03) << 4) | (tmp[1] & 0xF0);
-		b[2] = ((tmp[1] & 0x0F) << 2) | (tmp[2] & 0xC0);
+		b[1] = ((tmp[0] & 0x03) << 4) | ((tmp[1] & 0xF0) >> 4);
+		b[2] = ((tmp[1] & 0x0F) << 2) | ((tmp[2] & 0xC0) >> 6);
 		b[3] = tmp[2] & 0x3F;
 		b[4] = (tmp[3] & 0xFC) >> 2;
-		b[5] = ((tmp[3] & 0x03) << 4) | (tmp[4] & 0xF0);
-		b[6] = ((tmp[4] & 0x0F) << 2) | (tmp[5] & 0xC0);
-		b[7] = tmp[6] & 0x3F;
+		b[5] = ((tmp[3] & 0x03) << 4) | ((tmp[4] & 0xF0) >> 4);
+		b[6] = ((tmp[4] & 0x0F) << 2) | ((tmp[5] & 0xC0) >> 6);
+		b[7] = tmp[5] & 0x3F;
 
 		memset(s, 0, sizeof(s));
 		for (j = 0; j < 8; ++j) {
@@ -232,8 +232,8 @@ void des_cipher_block(struct des *des, unsigned char *block)
 		memcpy(right, s, sizeof(s));
 	}
 
-	memcpy(block, right, 4 * sizeof(unsigned char));
-	memcpy(block + 4, left, 4 * sizeof(unsigned char));
+	memcpy(block, left, 4 * sizeof(unsigned char));
+	memcpy(block + 4, right, 4 * sizeof(unsigned char));
 
 	des_ip_second(block);
 }

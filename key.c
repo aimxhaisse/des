@@ -54,7 +54,7 @@ static void des_subkey_permute(unsigned char *key, unsigned char *result)
 	unsigned char swap;
 	unsigned int i;
 
-	for (i = 0; i < 56; ++i) {
+	for (i = 0; i < 48; ++i) {
 		/* swap the two bits using the matrice subkey_pc2 */
 		swap = key[BYTE_POS(subkey_pc2[i] - 1)] & (1 << BIT_POS(subkey_pc2[i] - 1));
 		swap >>= BIT_POS(subkey_pc2[i] - 1);
@@ -72,7 +72,7 @@ static unsigned char subkeys_rotate[] = {
 /*
  * subkey generation
  */
-void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7])
+void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[6])
 {
 	int i;
 	unsigned char l[4], r[4];

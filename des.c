@@ -192,14 +192,13 @@ void des_cipher_block(struct des *des, unsigned char *block)
 	unsigned char row, col;
 
 	des_ip_first(block);
-	memcpy(right, &block[4], 4 * sizeof(unsigned char));
-	memcpy(left, &block, 4 * sizeof(unsigned char));
+
+	memcpy(right, block + 4, 4);
+	memcpy(left, block, 4);
 
 	for (i = 0; i < 16; ++i) {
-
-		memcpy(prev, right, 4 * sizeof(unsigned char));
+		memcpy(prev, right, 4);
 		des_exp(prev, right);
-		memcpy(tmp, right, sizeof(tmp));
 
 		for (j = 0; j < 6; ++j)
 			tmp[j] = right[j] ^ des->subkeys[i][j];
@@ -228,12 +227,12 @@ void des_cipher_block(struct des *des, unsigned char *block)
 		s[2] ^= left[2];
 		s[3] ^= left[3];
 
-		memcpy(left, right, sizeof(left));
-		memcpy(right, s, sizeof(s));
+		memcpy(left, right, 4);
+		memcpy(right, s, 4);
 	}
 
-	memcpy(block, left, 4 * sizeof(unsigned char));
-	memcpy(block + 4, right, 4 * sizeof(unsigned char));
+	memcpy(&block[0], right, 4 * sizeof(unsigned char));
+	memcpy(&block[4], left, 4 * sizeof(unsigned char));
 
 	des_ip_second(block);
 }

@@ -18,7 +18,7 @@ struct des {
 	enum operation	op;	/* current operation */
 	enum ciphermode	mode;	/* current mode */
 	unsigned char	key[8];	/* key to use */
-	unsigned char	subkeys[16][7];
+	unsigned char	subkeys[16][6];
 	char *		ipath;	/* path of input file */
 	char *		opath;	/* path of output file */
 	int		ifd;	/* input file descriptor */
@@ -30,7 +30,7 @@ void des_cipher_block(struct des *des, unsigned char *block);
 void binary_dumpc(unsigned char c);
 void binary_dumpi(unsigned int c);
 void des_key_permute(unsigned char *key);
-void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[7]);
+void des_generate_subkeys(unsigned char *key, unsigned char (*subkeys)[6]);
 
 #define DUMP_KEY(key)				\
 	binary_dumpc(key[0]);			\

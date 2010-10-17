@@ -24,7 +24,7 @@ static void des_ip_first(unsigned char *current)
 	unsigned char swap;
 	int i;
 
-	memcpy(&prev, current, sizeof(prev));
+	memcpy(prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
 		/* swap the two bits using the matrice ip_first */
 		swap = prev[BYTE_POS(ip_first[i] - 1)] & (1 << (BIT_POS(ip_first[i] - 1)));
@@ -55,7 +55,7 @@ static void des_ip_second(unsigned char *current)
 	unsigned char swap;
 	int i;
 
-	memcpy(&prev, current, sizeof(prev));
+	memcpy(prev, current, sizeof(prev));
 	for (i = 0; i < 64; ++i) {
 		/* swap the two bits using the matrice ip_second */
 		swap = prev[BYTE_POS(ip_second[i] - 1)] & (1 << BIT_POS(ip_second[i] - 1));
@@ -80,11 +80,13 @@ static unsigned char exp_right[] = {
 /*
  * Block expansion
  */
-static void des_exp(unsigned char *block, unsigned char *exp)
+static void des_exp(unsigned char *exp)
 {
+	unsigned char block[4];
 	unsigned char swap;
 	int i;
 
+	memcpy(block, exp, sizeof(block));
 	for (i = 0; i < 48; ++i) {
 		/* swap the two bits using the matrice exp_right */
 		swap = block[BYTE_POS(exp_right[i] - 1)] & (1 << BIT_POS(exp_right[i] - 1));
@@ -104,7 +106,7 @@ static unsigned char p[] = {
 
 static void des_p(unsigned char * s)
 {
-	unsigned char swap, tmp[8];
+	unsigned char swap, tmp[4];
 	int i;
 
 	memcpy(tmp, s, sizeof(tmp));
@@ -188,17 +190,18 @@ static unsigned char sboxes[8][4][16] = {
 void des_cipher_block(struct des *des, unsigned char *block)
 {
 	int i, j;
-	unsigned char left[4], right[6], tmp[6], b[8], s[4], prev[6];
+	unsigned char left[4], right[6], tmp[6], b[8], s[4], oldr[4];
 	unsigned char row, col;
 
 	des_ip_first(block);
 
-	memcpy(right, block + 4, 4);
-	memcpy(left, block, 4);
+	memcpy(left, block, sizeof(left));
+	memcpy(right, block + 4, 4 * sizeof(unsigned char));
 
 	for (i = 0; i < 16; ++i) {
-		memcpy(prev, right, 4);
-		des_exp(prev, right);
+
+		memcpy(oldr, right, sizeof(oldr));
+		des_exp(right);
 
 		for (j = 0; j < 6; ++j)
 			tmp[j] = right[j] ^ des->subkeys[i][j];
@@ -227,12 +230,12 @@ void des_cipher_block(struct des *des, unsigned char *block)
 		s[2] ^= left[2];
 		s[3] ^= left[3];
 
-		memcpy(left, right, 4);
-		memcpy(right, s, 4);
+		memcpy(left, oldr, sizeof(left));
+		memcpy(right, s, sizeof(s));
 	}
 
-	memcpy(&block[0], right, 4 * sizeof(unsigned char));
-	memcpy(&block[4], left, 4 * sizeof(unsigned char));
+	memcpy(block, right, 4 * sizeof(unsigned char));
+	memcpy(block + 4, left, sizeof(left));
 
 	des_ip_second(block);
 }

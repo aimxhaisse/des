@@ -22,7 +22,7 @@ static void des_mode_ebc(struct des * des)
 		if (nb_read > 0) {
 			pad = 8 - nb_read;
 			for (i = pad; i > 0; --i) {
-				block[8 - i] = pad;
+				block[8 - i] = 0;
 			}
 			des_cipher_block(des, block);
 			write(des->ofd, block, sizeof(block));
